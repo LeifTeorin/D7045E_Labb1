@@ -106,13 +106,13 @@ function createPointData() { // called during initialization to fill the arrays 
         pointCoords[2*i+1] = yPointDisplacer;  // y-coordinate of point
 
         yPointDisplacer += size*2;      //Displaces the next point by the diameter of the points
-        let  randomVelocity = 1 + 3*Math.random();
+        let  randomVelocity = 1 + Math.random();
         let  randomAngle = 2*Math.PI * Math.random();
         pointVelocities[2*i] = randomVelocity * Math.cos(randomAngle);
         pointVelocities[2*i+1] = randomVelocity * Math.sin(randomAngle);
     }
     for (let i = 0; i < POINT_COUNT; i++) {
-        pointSizes[i] = Math.random() * 48 + 16; // Replace maxSize and minSize with your desired range
+        pointSizes[i] = Math.random() * 32 + 16; // Replace maxSize and minSize with your desired range
     }
     for (let i = 0; i < 3 * POINT_COUNT; i++) {
            // The array contains color components, with three numbers per vertex.
@@ -177,10 +177,18 @@ function updatePointCoordsForFrame() { // called during an animation, before eac
 }
 
 function detectCollisions(){
+    let  randomSizes = document.getElementById("randomSizeCheckbox").checked;
+    let  pointsize = Number(document.getElementById("sizeChoice").value);
     for (let i = 0; i < POINT_COUNT; i += 1) {
         for(let j = 0; j < POINT_COUNT; j += 1){
-            let [x1, y1, radius1] = [pointCoords[2*i], pointCoords[2*i+1], pointSizes[i]/2];
-            let [x2, y2, radius2] = [pointCoords[2*j], pointCoords[2*j+1], pointSizes[j]/2];
+            //if(randomSizes){
+                let [x1, y1, radius1] = [pointCoords[2*i], pointCoords[2*i+1], pointSizes[i]/2];
+                let [x2, y2, radius2] = [pointCoords[2*j], pointCoords[2*j+1], pointSizes[j]/2];
+            /* } else {
+                let [x1, y1, radius1] = [pointCoords[2*i], pointCoords[2*i+1], pointsize/2];
+                let [x2, y2, radius2] = [pointCoords[2*j], pointCoords[2*j+1], pointsize/2];
+            } */
+            
             if(!checkCollision(x1, y1, radius1, x2, y2, radius2)) {
                 collisionCalculation(x1, y1, radius1, x2, y2, radius2, i, j);
             }
@@ -196,45 +204,30 @@ function checkCollision(x1, y1, r1, x2, y2, r2) {
 function collisionCalculation(x1,y1,r1,x2,y2,r2,i,j){
     let [vx1, vy1]  = [pointVelocities[2 * i], pointVelocities[2 * i + 1]];
     let [vx2, vy2] = [pointVelocities[2 * j], pointVelocities[2 * j + 1]];
-//    let distance = 0;
+    let distance = 1;
+    /* while(!checkCollision(x1, y1, r1, x2, y2, r2)){
+        x1 -= vx1;
+        y1 -= vy1;
+        x2 -= vx2;
+        y2 -= vy2;
+        distance += 1;
+    } */
     x1 -= vx1;
     y1 -= vy1;
     x2 -= vx2;
     y2 -= vy2;
+    pointCoords[2 * i] = x1;
+	pointCoords[2 * i + 1] = y1;
+	pointCoords[2 * j] = x2;
+	pointCoords[2 * j + 1] = y2;
     let m1 = r1 * r1 * Math.PI;
     let m2 =  r2 * r2 * Math.PI;
-    let xn = x2 - x1;
-    let yn = y2 - y1;
-    let u = 1/(Math.sqrt((xn*xn)+(yn*yn)))
-    let xt = -yn;
-    let yt = xn;
-    let vx1n = u*vx1*xn;
-    let vy1n = u*vy1*yn;
-    let vx2n = u*vx2*xn;
-    let vy2n = u*vx2*yn;
-    let vx1t = u*vx1*xt;
-    let vy1t = u*vy1*yt;
-    let vx2t = u*vx2*xt;
-    let vy2t = u*vx2*yt;
-    let vx1nnew = (vx1n*(m1-m2)+2*m2*vx2n)/(m1+m2);
-    let vy1nnew = (vy1n*(m1-m2)+2*m2*vy2n)/(m1+m2);
-    let vx2nnew = (vx2n*(m2-m1)+2*m1*vx1n)/(m1+m2);
-    let vy2nnew = (vy2n*(m2-m1)+2*m2*vy1n)/(m1+m2);
-    
-    let vx1nfinal = vx1nnew*u*xn;
-    let vx2nfinal = vx2nnew*u*xn;
-    let vy1nfinal = vy1nnew*u*yn;
-    let vy2nfinal = vy2nnew*u*yn;
-    let vx1tfinal = vx1t*u*xt;
-    let vx2tfinal = vx2t*u*xt;
-    let vy1tfinal = vy1t*u*yt;
-    let vy2tfinal = vy2t*u*yt;
 
     let theta = -Math.atan2(y2 - y1, x2 - x1);
-    let v1 = [vx1 * Math.cos(theta) - vy1 * Math.sin(theta), vx1 * Math.sin(theta) + vy1 * Math.cos(theta)];
-    let v2 = [vx2 * Math.cos(theta) - vy2 * Math.sin(theta), vx2 * Math.sin(theta) + vy2 * Math.cos(theta)];
-    let vn1 = [(v1[0]*(m1-m2)+m2*2*v2[0])/(m1+m2) * Math.cos(theta) - v1[1] * Math.sin(theta), (v1[0]*(m1-m2)+m2*2*v2[0])/(m1+m2)*Math.sin(theta) + v1[1] * Math.cos(theta)];
-    let vn2 = [(v2[0]*(m2-m1)+m1*2*v1[0])/(m1+m2) * Math.cos(theta) - v2[1] * Math.sin(theta), (v2[1]*(m2-m1)+2*m1*v1[1])/(m1+m2)*Math.sin(theta) + v2[1] * Math.cos(theta)];
+    let v1 = rotate([vx1, vy1], theta);
+    let v2 = rotate([vx2, vy2], theta);
+    let vn1 = rotate([(v1[0] * (m1 - m2)) / (m1 + m2) + (v2[0] * 2 * m2) / (m1 + m2), v1[1], ], -theta);
+    let vn2 = rotate([(v2[0] * (m2 - m1)) / (m1 + m2) + (v1[0] * 2 * m1) / (m1 + m2), v2[1], ], -theta);
 
     vx1 = vn1[0];
     vy1 = vn1[1];
@@ -245,15 +238,20 @@ function collisionCalculation(x1,y1,r1,x2,y2,r2,i,j){
     pointVelocities[2 * j] = vx2;
     pointVelocities[2 * j + 1] = vy2;
 
-    pointCoords[2 * i] += vx1;
-    pointCoords[2 * i + 1] += vy1;
-    pointCoords[2 * j] += vx2;
-    pointCoords[2 * j + 1] += vy2;
+    pointCoords[2 * i] += (vx1*distance);
+    pointCoords[2 * i + 1] += (vy1*distance);
+    pointCoords[2 * j] += (vx2*distance);
+    pointCoords[2 * j + 1] += (vy2*distance);
 
     /* pointCoords[2 * i] -= vx1;
     pointCoords[2 * i + 1] -= vy1;
     pointCoords[2 * j] -= vx2;
     pointCoords[2 * j + 1] -= vy2; */
+}
+
+function rotate(v, theta) {
+	return [v[0] * Math.cos(theta) - v[1] * Math.sin(theta),
+		    v[0] * Math.sin(theta) + v[1] * Math.cos(theta),];
 }
 
 /**
